@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COBIT 5 - Mapeamento Interativo</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            color: #1e3a8a;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3b82f6;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-subtitle {
+            font-size: 0.6em;
+            color: #64748b;
+            font-weight: normal;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .objective-btn {
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-size: 0.95em;
+            line-height: 1.5;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .objective-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .objective-btn.selected {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border-color: #1e40af;
+            font-weight: 600;
+        }
+
+        .objective-btn.highlighted {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: white;
+            border-color: #d97706;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .objective-btn.process-highlight {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-color: #047857;
+            animation: glow 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
+            }
+            50% {
+                transform: scale(1.02);
+                box-shadow: 0 0 20px 5px rgba(251, 191, 36, 0.4);
+            }
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 20px 5px rgba(16, 185, 129, 0.8);
+            }
+        }
+
+        .objective-code {
+            display: inline-block;
+            background: rgba(0,0,0,0.1);
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-weight: 700;
+            font-size: 0.85em;
+            margin-right: 8px;
+        }
+
+        .selected .objective-code,
+        .highlighted .objective-code,
+        .process-highlight .objective-code {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .report-section {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .report-textarea {
+            width: 100%;
+            min-height: 400px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            line-height: 1.6;
+            resize: vertical;
+            background: white;
+        }
+
+        .report-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 200px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 20px;
+            border-radius: 5px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+
+        // Dados do COBIT 5
+        const CORPORATE_OBJECTIVES = [
+            { id: '01', name: 'Valor dos investimentos da organização percebidos pelas partes interessadas', dimension: 'Financeira' },
+            { id: '02', name: 'Portfólio de produtos e serviços competitivos', dimension: 'Financeira' },
+            { id: '03', name: 'Gestão do risco do negócio (salvaguarda de ativos)', dimension: 'Financeira' },
+            { id: '04', name: 'Conformidade com as leis e regulamentos externos', dimension: 'Financeira' },
+            { id: '05', name: 'Transparência financeira', dimension: 'Financeira' },
+            { id: '06', name: 'Cultura de serviço orientada ao cliente', dimension: 'Cliente' },
+            { id: '07', name: 'Continuidade e disponibilidade do serviço de negócio', dimension: 'Cliente' },
+            { id: '08', name: 'Respostas rápidas a um ambiente de negócios em mudança', dimension: 'Cliente' },
+            { id: '09', name: 'Tomada de decisão estratégica com base na informação', dimension: 'Cliente' },
+            { id: '10', name: 'Otimização dos custos de prestação de serviços', dimension: 'Interna' },
+            { id: '11', name: 'Otimização da funcionalidade do processo de negócio', dimension: 'Interna' },
+            { id: '12', name: 'Otimização dos custos do processo de negócio', dimension: 'Interna' },
+            { id: '13', name: 'Gestão de programas de mudanças de negócios', dimension: 'Interna' },
+            { id: '14', name: 'Produtividade operacional da equipe', dimension: 'Interna' },
+            { id: '15', name: 'Conformidade com as políticas internas', dimension: 'Interna' },
+            { id: '16', name: 'Pessoas qualificadas e motivadas', dimension: 'Treinamento e Crescimento' },
+            { id: '17', name: 'Cultura de inovação de produtos e negócios', dimension: 'Treinamento e Crescimento' }
+        ];
+
+        const IT_OBJECTIVES = [
+            { id: '01', name: 'Alinhamento da estratégia de TI e de negócios', dimension: 'Financeira' },
+            { id: '02', name: 'Conformidade de TI e apoio para a conformidade do negócio com as leis e regulamentos externos', dimension: 'Financeira' },
+            { id: '03', name: 'Compromisso da gerência executiva com a tomada de decisões de TI', dimension: 'Financeira' },
+            { id: '04', name: 'Gestão do risco organizacional de TI', dimension: 'Financeira' },
+            { id: '05', name: 'Benefícios obtidos pelo investimento de TI e portfólio de serviços', dimension: 'Financeira' },
+            { id: '06', name: 'Transparência dos custos, benefícios e riscos de TI', dimension: 'Financeira' },
+            { id: '07', name: 'Prestação de serviços de TI em consonância com os requisitos de negócio', dimension: 'Cliente' },
+            { id: '08', name: 'Uso adequado de aplicativos, informações e soluções tecnológicas', dimension: 'Cliente' },
+            { id: '09', name: 'Agilidade de TI', dimension: 'Interna' },
+            { id: '10', name: 'Segurança da informação, infraestrutura de processamento e aplicativos', dimension: 'Interna' },
+            { id: '11', name: 'Otimização de ativos, recursos e capacidades de TI', dimension: 'Interna' },
+            { id: '12', name: 'Capacitação e apoio aos processos de negócios através da integração de aplicativos e tecnologia', dimension: 'Interna' },
+            { id: '13', name: 'Entrega de programas fornecendo benefícios, dentro do prazo, orçamento e atendendo requisitos e padrões', dimension: 'Interna' },
+            { id: '14', name: 'Disponibilidade de informações úteis e confiáveis para a tomada de decisão', dimension: 'Interna' },
+            { id: '15', name: 'Conformidade de TI com as políticas internas', dimension: 'Interna' },
+            { id: '16', name: 'Equipes de TI e de negócios motivadas e qualificadas', dimension: 'Treinamento e Crescimento' },
+            { id: '17', name: 'Conhecimento, expertise e iniciativas para inovação dos negócios', dimension: 'Treinamento e Crescimento' }
+        ];
+
+        const COBIT_PROCESSES = [
+            // Avaliar, Dirigir e Monitorar (EDM)
+            { id: 'EDM01', name: 'Assegurar a Definição e Manutenção do Framework de Governança', domain: 'EDM' },
+            { id: 'EDM02', name: 'Assegurar a Entrega de Benefícios', domain: 'EDM' },
+            { id: 'EDM03', name: 'Assegurar a Otimização de Riscos', domain: 'EDM' },
+            { id: 'EDM04', name: 'Assegurar a Otimização de Recursos', domain: 'EDM' },
+            { id: 'EDM05', name: 'Assegurar a Transparência das Partes Interessadas', domain: 'EDM' },
+            
+            // Alinhar, Planejar e Organizar (APO)
+            { id: 'APO01', name: 'Gerenciar o Framework de Gestão de TI', domain: 'APO' },
+            { id: 'APO02', name: 'Gerenciar a Estratégia', domain: 'APO' },
+            { id: 'APO03', name: 'Gerenciar a Arquitetura Empresarial', domain: 'APO' },
+            { id: 'APO04', name: 'Gerenciar a Inovação', domain: 'APO' },
+            { id: 'APO05', name: 'Gerenciar o Portfólio', domain: 'APO' },
+            { id: 'APO06', name: 'Gerenciar Orçamento e Custos', domain: 'APO' },
+            { id: 'APO07', name: 'Gerenciar os Recursos Humanos', domain: 'APO' },
+            { id: 'APO08', name: 'Gerenciar Relacionamentos', domain: 'APO' },
+            { id: 'APO09', name: 'Gerenciar Acordos de Serviço', domain: 'APO' },
+            { id: 'APO10', name: 'Gerenciar Fornecedores', domain: 'APO' },
+            { id: 'APO11', name: 'Gerenciar a Qualidade', domain: 'APO' },
+            { id: 'APO12', name: 'Gerenciar Riscos', domain: 'APO' },
+            { id: 'APO13', name: 'Gerenciar Segurança', domain: 'APO' },
+            
+            // Construir, Adquirir e Implementar (BAI)
+            { id: 'BAI01', name: 'Gerenciar Programas e Projetos', domain: 'BAI' },
+            { id: 'BAI02', name: 'Gerenciar Definição de Requisitos', domain: 'BAI' },
+            { id: 'BAI03', name: 'Gerenciar Identificação e Construção de Soluções', domain: 'BAI' },
+            { id: 'BAI04', name: 'Gerenciar Disponibilidade e Capacidade', domain: 'BAI' },
+            { id: 'BAI05', name: 'Gerenciar Habilitação de Mudança Organizacional', domain: 'BAI' },
+            { id: 'BAI06', name: 'Gerenciar Mudanças', domain: 'BAI' },
+            { id: 'BAI07', name: 'Gerenciar Aceite de Mudanças e Transições', domain: 'BAI' },
+            { id: 'BAI08', name: 'Gerenciar Conhecimento', domain: 'BAI' },
+            { id: 'BAI09', name: 'Gerenciar Ativos', domain: 'BAI' },
+            { id: 'BAI10', name: 'Gerenciar Configuração', domain: 'BAI' },
+            
+            // Entregar, Serviço e Suporte (DSS)
+            { id: 'DSS01', name: 'Gerenciar Operações', domain: 'DSS' },
+            { id: 'DSS02', name: 'Gerenciar Requisições e Incidentes de Serviço', domain: 'DSS' },
+            { id: 'DSS03', name: 'Gerenciar Problemas', domain: 'DSS' },
+            { id: 'DSS04', name: 'Gerenciar Continuidade', domain: 'DSS' },
+            { id: 'DSS05', name: 'Gerenciar Serviços de Segurança', domain: 'DSS' },
+            { id: 'DSS06', name: 'Gerenciar Controles de Processos de Negócio', domain: 'DSS' },
+            
+            // Monitorar, Avaliar e Medir (MEA)
+            { id: 'MEA01', name: 'Monitorar, Avaliar e Medir Desempenho e Conformidade', domain: 'MEA' },
+            { id: 'MEA02', name: 'Monitorar, Avaliar e Medir o Sistema de Controle Interno', domain: 'MEA' },
+            { id: 'MEA03', name: 'Monitorar, Avaliar e Medir a Conformidade com Requisitos Externos', domain: 'MEA' }
+        ];
+
+        // Mapeamento Corporate -> IT (baseado na tabela COBIT 5 - apenas relações Primárias "P")
+        const CORPORATE_TO_IT_MAP = {
+            '01': ['01', '03', '05', '07', '11', '13'],
+            '02': ['01', '05', '07', '09', '12', '17'],
+            '03': ['04', '10', '16'],
+            '04': ['02', '10'],
+            '05': ['06'],
+            '06': ['01', '07'],
+            '07': ['04', '10', '14'],
+            '08': ['01', '07', '09', '17'],
+            '09': ['01', '14'],
+            '10': ['04', '06', '11'],
+            '11': ['01', '07', '08', '09', '12'],
+            '12': ['05', '06', '11'],
+            '13': ['01', '03', '13'],
+            '14': ['08', '16'],
+            '15': ['02', '15'],
+            '16': ['16'],
+            '17': ['09', '17']
+        };
+
+        // Mapeamento IT -> Processos (baseado na tabela oficial COBIT 5)
+        const IT_TO_PROCESS_MAP = {
+            '01': ['EDM01', 'EDM02', 'APO01', 'APO02', 'APO03', 'APO07', 'APO08', 'BAI01', 'BAI02'],
+            '02': ['APO01', 'APO12', 'APO13', 'BAI10', 'DSS05', 'MEA02', 'MEA03'],
+            '03': ['EDM01', 'EDM05'],
+            '04': ['EDM03', 'APO10', 'APO12', 'APO13', 'BAI01', 'BAI06', 'DSS01', 'DSS02', 'DSS03', 'DSS04', 'DSS05', 'DSS06', 'MEA01', 'MEA02', 'MEA03'],
+            '05': ['EDM02', 'APO04', 'APO05', 'APO06', 'APO11', 'BAI01'],
+            '06': ['EDM02', 'EDM03', 'EDM05', 'APO06', 'APO12', 'APO13', 'BAI09'],
+            '07': ['EDM01', 'EDM02', 'EDM05', 'APO01', 'APO02', 'APO08', 'APO09', 'APO10', 'APO11', 'BAI02', 'BAI03', 'BAI04', 'BAI06', 'DSS01', 'DSS02', 'DSS03', 'DSS04', 'DSS06', 'MEA01'],
+            '08': ['APO04', 'BAI05', 'BAI07'],
+            '09': ['EDM04', 'APO01', 'APO03', 'APO04', 'APO10', 'BAI08'],
+            '10': ['EDM03', 'APO12', 'APO13', 'BAI06', 'DSS05'],
+            '11': ['EDM04', 'APO01', 'APO03', 'APO04', 'APO07', 'BAI04', 'BAI09', 'BAI10', 'DSS01', 'DSS03', 'MEA01'],
+            '12': ['APO08', 'BAI02', 'BAI07'],
+            '13': ['APO05', 'APO07', 'APO11', 'APO12', 'BAI01', 'BAI05'],
+            '14': ['APO09', 'APO13', 'BAI04', 'BAI10', 'DSS03', 'DSS04'],
+            '15': ['EDM03', 'APO01', 'MEA01', 'MEA02'],
+            '16': ['EDM04', 'APO01', 'APO07'],
+            '17': ['EDM02', 'APO01', 'APO02', 'APO04', 'APO07', 'APO08', 'BAI05', 'BAI08']
+        };
+
+        function Cobit5App() {
+            const [selectedCorporate, setSelectedCorporate] = useState(new Set());
+            const [selectedIT, setSelectedIT] = useState(new Set());
+            const [showReport, setShowReport] = useState(false);
+
+            const highlightedIT = useMemo(() => {
+                const highlighted = new Set();
+                selectedCorporate.forEach(corpId => {
+                    const relatedIT = CORPORATE_TO_IT_MAP[corpId] || [];
+                    relatedIT.forEach(itId => highlighted.add(itId));
+                });
+                return highlighted;
+            }, [selectedCorporate]);
+
+            const highlightedProcesses = useMemo(() => {
+                const highlighted = new Set();
+                const allSelectedIT = new Set([...selectedIT, ...highlightedIT]);
+                allSelectedIT.forEach(itId => {
+                    const relatedProcesses = IT_TO_PROCESS_MAP[itId] || [];
+                    relatedProcesses.forEach(procId => highlighted.add(procId));
+                });
+                return highlighted;
+            }, [selectedIT, highlightedIT]);
+
+            const toggleCorporate = (id) => {
+                setSelectedCorporate(prev => {
+                    const newSet = new Set(prev);
+                    if (newSet.has(id)) {
+                        newSet.delete(id);
+                    } else {
+                        newSet.add(id);
+                    }
+                    return newSet;
+                });
+            };
+
+            const toggleIT = (id) => {
+                setSelectedIT(prev => {
+                    const newSet = new Set(prev);
+                    if (newSet.has(id)) {
+                        newSet.delete(id);
+                    } else {
+                        newSet.add(id);
+                    }
+                    return newSet;
+                });
+            };
+
+            const clearAll = () => {
+                setSelectedCorporate(new Set());
+                setSelectedIT(new Set());
+                setShowReport(false);
+            };
+
+            const generateReport = () => {
+                const lines = [];
+                lines.push('═══════════════════════════════════════════════════════════════');
+                lines.push('          RELATÓRIO DE MAPEAMENTO COBIT 5');
+                lines.push('═══════════════════════════════════════════════════════════════');
+                lines.push('');
+                lines.push(`Data de Geração: ${new Date().toLocaleString('pt-BR')}`);
+                lines.push('');
+                
+                lines.push('───────────────────────────────────────────────────────────────');
+                lines.push('1. OBJETIVOS CORPORATIVOS SELECIONADOS');
+                lines.push('───────────────────────────────────────────────────────────────');
+                if (selectedCorporate.size === 0) {
+                    lines.push('   Nenhum objetivo corporativo selecionado.');
+                } else {
+                    selectedCorporate.forEach(id => {
+                        const obj = CORPORATE_OBJECTIVES.find(o => o.id === id);
+                        lines.push(`   [${obj.id}] ${obj.name}`);
+                    });
+                }
+                lines.push('');
+
+                const allRelatedIT = new Set();
+                selectedCorporate.forEach(corpId => {
+                    const relatedIT = CORPORATE_TO_IT_MAP[corpId] || [];
+                    relatedIT.forEach(itId => allRelatedIT.add(itId));
+                });
+                selectedIT.forEach(itId => allRelatedIT.add(itId));
+
+                lines.push('───────────────────────────────────────────────────────────────');
+                lines.push('2. OBJETIVOS DE TI RELACIONADOS');
+                lines.push('───────────────────────────────────────────────────────────────');
+                if (allRelatedIT.size === 0) {
+                    lines.push('   Nenhum objetivo de TI identificado.');
+                } else {
+                    allRelatedIT.forEach(id => {
+                        const obj = IT_OBJECTIVES.find(o => o.id === id);
+                        const source = selectedIT.has(id) ? '[Selecionado Diretamente]' : '[Relacionado]';
+                        lines.push(`   [${obj.id}] ${obj.name} ${source}`);
+                    });
+                }
+                lines.push('');
+
+                const allRelatedProcesses = new Set();
+                allRelatedIT.forEach(itId => {
+                    const relatedProc = IT_TO_PROCESS_MAP[itId] || [];
+                    relatedProc.forEach(procId => allRelatedProcesses.add(procId));
+                });
+
+                lines.push('───────────────────────────────────────────────────────────────');
+                lines.push('3. PROCESSOS COBIT 5 NECESSÁRIOS');
+                lines.push('───────────────────────────────────────────────────────────────');
+                if (allRelatedProcesses.size === 0) {
+                    lines.push('   Nenhum processo identificado.');
+                } else {
+                    const byDomain = {};
+                    allRelatedProcesses.forEach(id => {
+                        const proc = COBIT_PROCESSES.find(p => p.id === id);
+                        if (!byDomain[proc.domain]) byDomain[proc.domain] = [];
+                        byDomain[proc.domain].push(proc);
+                    });
+
+                    const domainNames = {
+                        'EDM': 'Avaliar, Dirigir e Monitorar',
+                        'APO': 'Alinhar, Planejar e Organizar',
+                        'BAI': 'Construir, Adquirir e Implementar',
+                        'DSS': 'Entregar, Serviço e Suporte',
+                        'MEA': 'Monitorar, Avaliar e Medir'
+                    };
+
+                    Object.keys(byDomain).sort().forEach(domain => {
+                        lines.push('');
+                        lines.push(`   ${domain} - ${domainNames[domain]}`);
+                        lines.push('   ' + '─'.repeat(60));
+                        byDomain[domain].forEach(proc => {
+                            lines.push(`   [${proc.id}] ${proc.name}`);
+                        });
+                    });
+                }
+                lines.push('');
+
+                lines.push('───────────────────────────────────────────────────────────────');
+                lines.push('4. RESUMO ESTATÍSTICO');
+                lines.push('───────────────────────────────────────────────────────────────');
+                lines.push(`   Objetivos Corporativos: ${selectedCorporate.size}`);
+                lines.push(`   Objetivos de TI: ${allRelatedIT.size}`);
+                lines.push(`   Processos COBIT 5: ${allRelatedProcesses.size}`);
+                lines.push('');
+                lines.push('═══════════════════════════════════════════════════════════════');
+                lines.push('                    FIM DO RELATÓRIO');
+                lines.push('═══════════════════════════════════════════════════════════════');
+
+                return lines.join('\n');
+            };
+
+            const allRelatedIT = new Set();
+            selectedCorporate.forEach(corpId => {
+                const relatedIT = CORPORATE_TO_IT_MAP[corpId] || [];
+                relatedIT.forEach(itId => allRelatedIT.add(itId));
+            });
+            selectedIT.forEach(itId => allRelatedIT.add(itId));
+
+            const allRelatedProcesses = new Set();
+            allRelatedIT.forEach(itId => {
+                const relatedProc = IT_TO_PROCESS_MAP[itId] || [];
+                relatedProc.forEach(procId => allRelatedProcesses.add(procId));
+            });
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1>🎯 COBIT 5 - Mapeamento Interativo</h1>
+                        <p>Ferramenta de mapeamento entre Objetivos Corporativos, Objetivos de TI e Processos</p>
+                    </div>
+
+                    <div className="content">
+                        <div className="stats">
+                            <div className="stat-card">
+                                <div className="stat-number">{selectedCorporate.size}</div>
+                                <div className="stat-label">Objetivos Corporativos</div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-number">{allRelatedIT.size}</div>
+                                <div className="stat-label">Objetivos de TI</div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-number">{allRelatedProcesses.size}</div>
+                                <div className="stat-label">Processos COBIT 5</div>
+                            </div>
+                        </div>
+
+                        <div className="legend">
+                            <div className="legend-item">
+                                <div className="legend-color" style={{background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'}}></div>
+                                <span>Selecionado</span>
+                            </div>
+                            <div className="legend-item">
+                                <div className="legend-color" style={{background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'}}></div>
+                                <span>Relacionado (IT)</span>
+                            </div>
+                            <div className="legend-item">
+                                <div className="legend-color" style={{background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'}}></div>
+                                <span>Processo Ativo</span>
+                            </div>
+                        </div>
+
+                        <div className="section">
+                            <h2 className="section-title">
+                                📊 Objetivos Corporativos
+                                <span className="section-subtitle">(Pág. 21 - Enterprise Goals)</span>
+                            </h2>
+                            <div className="grid">
+                                {CORPORATE_OBJECTIVES.map(obj => (
+                                    <button
+                                        key={obj.id}
+                                        className={`objective-btn ${selectedCorporate.has(obj.id) ? 'selected' : ''}`}
+                                        onClick={() => toggleCorporate(obj.id)}
+                                    >
+                                        <span className="objective-code">{obj.id}</span>
+                                        {obj.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="section">
+                            <h2 className="section-title">
+                                💻 Objetivos de TI
+                                <span className="section-subtitle">(Pág. 52 - IT-Related Goals)</span>
+                            </h2>
+                            <div className="grid">
+                                {IT_OBJECTIVES.map(obj => {
+                                    const isHighlighted = highlightedIT.has(obj.id) && !selectedIT.has(obj.id);
+                                    const isSelected = selectedIT.has(obj.id);
+                                    return (
+                                        <button
+                                            key={obj.id}
+                                            className={`objective-btn ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}`}
+                                            onClick={() => toggleIT(obj.id)}
+                                        >
+                                            <span className="objective-code">{obj.id}</span>
+                                            {obj.name}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="section">
+                            <h2 className="section-title">
+                                ⚙️ Processos COBIT 5
+                                <span className="section-subtitle">(Pág. 54 - COBIT 5 Processes)</span>
+                            </h2>
+                            {['EDM', 'APO', 'BAI', 'DSS', 'MEA'].map(domain => {
+                                const domainProcesses = COBIT_PROCESSES.filter(p => p.domain === domain);
+                                if (domainProcesses.length === 0) return null;
+                                
+                                const domainNames = {
+                                    'EDM': 'Avaliar, Dirigir e Monitorar',
+                                    'APO': 'Alinhar, Planejar e Organizar',
+                                    'BAI': 'Construir, Adquirir e Implementar',
+                                    'DSS': 'Entregar, Serviço e Suporte',
+                                    'MEA': 'Monitorar, Avaliar e Medir'
+                                };
+
+                                return (
+                                    <div key={domain} style={{marginBottom: '30px'}}>
+                                        <h3 style={{color: '#475569', marginBottom: '15px', fontSize: '1.2em'}}>
+                                            {domain} - {domainNames[domain]}
+                                        </h3>
+                                        <div className="grid">
+                                            {domainProcesses.map(proc => {
+                                                const isHighlighted = highlightedProcesses.has(proc.id);
+                                                return (
+                                                    <div
+                                                        key={proc.id}
+                                                        className={`objective-btn ${isHighlighted ? 'process-highlight' : ''}`}
+                                                    >
+                                                        <span className="objective-code">{proc.id}</span>
+                                                        {proc.name}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <div className="actions">
+                            <button 
+                                className="btn btn-primary"
+                                onClick={() => setShowReport(!showReport)}
+                                disabled={selectedCorporate.size === 0 && selectedIT.size === 0}
+                            >
+                                📄 {showReport ? 'Ocultar Relatório' : 'Gerar Relatório'}
+                            </button>
+                            <button 
+                                className="btn btn-secondary"
+                                onClick={clearAll}
+                            >
+                                🔄 Limpar Seleção
+                            </button>
+                        </div>
+
+                        {showReport && (
+                            <div className="report-section">
+                                <h2 className="section-title">📋 Relatório Completo</h2>
+                                <textarea 
+                                    className="report-textarea"
+                                    value={generateReport()}
+                                    readOnly
+                                    onClick={(e) => e.target.select()}
+                                />
+                                <p style={{marginTop: '10px', color: '#64748b', fontSize: '0.9em'}}>
+                                    💡 Clique no campo acima para selecionar todo o texto e copiar
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<Cobit5App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
